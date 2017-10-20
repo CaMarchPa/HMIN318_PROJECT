@@ -10,10 +10,10 @@ Dans ce projet, j'ai utilisé la librairie CImg.h, qui est un librairie cpp pour
 How to compile ?
 
 #g++ : Windows
-g++ -o main.exe hello_word.cpp -O2 -lgdi32
+g++ -o project.exe methods.h main.cpp -O2 -lgdi32
 
 #g++ : Linux version
-g++ -o main main.cpp -O2 -L/usr/X11R6/lib -lm -lpthread -lX11
+g++ -o project methods.h main.cpp -O2 -L/usr/X11R6/lib -lm -lpthread -lX11
 
 #g++ : Mac Os
-g++ -o main.exe main.cpp -O2 -lm -lpthread -I/usr/X11R6/include -L/usr/X11R6/lib -lm -lpthread -lX11
+g++ -o project methods.h main.cpp -O2 -lm -lpthread -I/usr/X11R6/include -L/usr/X11R6/lib -lm -lpthread -lX11
