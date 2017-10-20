@@ -1,13 +1,13 @@
-all: tp_0
+all: project
 
-tp_0: tp0_main.o
-	g++ -o tp_0 tp0_main.o
+project: main.o
+	g++ -o project main.o -O2 -L/usr/X11R6/lib -lm -lpthread -lX11
 
-tp0_main.o: tp0_main.cpp
-	g++ -o tp0_main.o -c tp0_main.cpp -O2 -L/usr/X11R6/lib -lm -lpthread -lX11
+main.o: methods.h main.cpp
+	g++ -o main.o main.cpp -O2 -L/usr/X11R6/lib -lm -lpthread -lX11
 
 clean:
 	rm -rf *.o
 
 mrproper: clean
-	rm -rf tp_0
+	rm -rf project
