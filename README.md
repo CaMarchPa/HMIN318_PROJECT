@@ -1,11 +1,11 @@
 # HMIN318_PROJECT
 IMAGINA : Projet de fin de semestre de l'unité HMIN318
 
-Le projet consiste à implémenter un algorithme de segmentation des Sinus à partir d'Images CT.
+Le projet consiste à implémenter un(des) algorithme(s) pour la segmentation des Sinus dans des Images CT par seuillage local.
 
-C'est un petit projet qui rentre dans le cadre de ma formation en imagerie médicale.
+C'est un mini-projet qui rentre dans le cadre de ma formation en imagerie médicale à l'Université Montpellier 2.
 
-Dans ce projet, j'ai utilisé la librairie CImg.h, qui est un librairie cpp pour la manipulation de images 2D et 3D.
+Dans ce projet, j'ai utilisé la librairie CImg.h, qui est une librairie c++ pour la manipulation de images 2D et 3D, particulièrement dans la recherche scientifique.
 
 How to compile ?
 
