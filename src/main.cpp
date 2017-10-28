@@ -7,7 +7,7 @@ int main(int argc, char **argv) {
 	int threshold_method = 0;
 	int neighborhood = 3;
 
-	char resume = 'n';
+	char resume = '\n';
 	if (argc != 2) {
 		std::cout << "USAGE : (UNIX) ./project image_name.hdr" << std::endl;
 		std::cout << "        (WINDOWS) project.xe image_name.hdr)" << '\n';
@@ -40,20 +40,37 @@ int main(int argc, char **argv) {
 		std::cout << "\t     +---------------------------------------------------------+" << std::endl;
 		std::cout << "\t                   COMPUTE THRESHOLD METHOD : " << '\t';
 		std::cin >> threshold_method;
+		while (std::cin.fail()) {
+			std::cout << "\t             /!\\ ERROR : enter a integer " << '\t';
+			std::cin.clear();
+			std::cin.ignore(256, '\n');
+			std::cin >> threshold_method;
+		}
+
 		std::cout << std::endl;
 
-		std::cout << "\t             +-----------------------------------+" << std::endl;
-		std::cout << "\t      -------| Choisissez la taille du voisinage |-------" << std::endl;
-		// std::cout << "\t             +-----------------------------------+" << std::endl;
-		std::cout << "\t      +------                                     -------+" << std::endl;
-		std::cout << "\t      |           Exemple : 3 ==> un bloc 3x3x3          |" << std::endl;
-		std::cout << "\t      +--------------------------------------------------+" << std::endl;
-		std::cout << "\t                   NEIGHBORHOOD SIZE : " << '\t';
-		std::cin >> neighborhood;
+		if (threshold_method != 5) {
+			std::cout << "\t             +-----------------------------------+" << std::endl;
+			std::cout << "\t      -------| Choisissez la taille du voisinage |-------" << std::endl;
+			std::cout << "\t      +------                                     -------+" << std::endl;
+			std::cout << "\t      |           Exemple : 3 ==> un bloc 3x3x3          |" << std::endl;
+			std::cout << "\t      +--------------------------------------------------+" << std::endl;
+			std::cout << "\t                   NEIGHBORHOOD SIZE : " << '\t';
+			std::cin >> neighborhood;
+			while (std::cin.fail()) {
+				std::cout << "\t             /!\\ ERROR : enter a integer " << '\t';
+				std::cin.clear();
+				std::cin.ignore(256, '\n');
+				std::cin >> neighborhood;
+			}
+		}
+
 		if ((neighborhood > height / 2) || (neighborhood > width / 2) || (neighborhood > depth / 2) || (neighborhood < 0)) {
 			neighborhood = (height < width) ? height : width;
 			neighborhood = (neighborhood < depth) ? (neighborhood / 2) : depth / 2;
 		}
+		int x = - 1, y = - 1, z = 0;
+		float intensity;
 		switch(threshold_method)
 		{
 			case 1:
@@ -74,10 +91,44 @@ int main(int argc, char **argv) {
 			case 4:
 					std::cout << "\t\t   SEUIL À PARTIR DE LA MÉTHODE D'OTSU " << std::endl;
 					img_tmp = get_segmented_image_by_otsu(img_read, neighborhood);
+					break;
+
 			case 5:
 					std::cout << "\t\t   SEUIL FIXÉ PAR L'UTILISATEUR " << std::endl;
-					std::cout << "Segmentation by searching the connected components of intensities close to the intensity chosen by the user." << std::endl;
-					std::cout << "\t\t\t\t NOT YET IMPLEMENTED (coming soooooooon)" << std::endl;
+					std::cout << "\n\t  * * * * Utilisez la molette de la souris et cliquer sur l'image pour fixer un seuil * * * * " << std::endl;
+					while (x == -1) {
+						if (img_disp.wheel()) {
+							const int scroll = img_disp.wheel();
+							slice += scroll;
+				            if (slice < 0) {
+				                slice = 0;
+				            } else {
+				                if (slice >= (int)depth) {
+				                    slice = (int)depth - 1;
+				                }
+				            }
+				            img_disp.set_wheel();
+				            redraw = true;
+						}
+
+						if (redraw) {
+							CImg<> current_img = img_read.get_slice(slice);
+							img_disp.display(current_img);
+						}
+
+						if (img_disp.button()&1) {
+							x = img_disp.mouse_x();
+							y = img_disp.mouse_y();
+							z = slice;
+						}
+					}
+					intensity = img_read(x, y, z);
+					std::cout << "intensity value : img (" << x << ", " << y << ", " << z <<") = " << intensity << '\n';
+					if (intensity < 50)
+						intensity = 100;
+					slice = 0;
+					redraw = false;
+					img_tmp = get_segmented_image_by_CC(img_read, intensity, 20);
 					break;
 
 			default:
@@ -87,7 +138,7 @@ int main(int argc, char **argv) {
 		}
 
 		CImgDisplay img_read_disp(img_tmp, "Segmented image");
-		std::cout << "\t\t   Revenir au MENU en tapant sur la touche ESPACE" << std::endl;
+		std::cout << "\n\t     * * * * Utilisez la molette de la souris pour faire défiler les coupes * * * * " << std::endl;
 		while (!img_read_disp.is_keyESC() && !img_read_disp.is_closed()) {
 			if(img_read_disp.wheel()) {
 	            const int scroll = img_read_disp.wheel();
@@ -112,15 +163,15 @@ int main(int argc, char **argv) {
 		}
 		img_read_disp.close();
 
-		std::cout << "\n\t  Voulez vous ressayer une autre méthode de calcul du seuil [o/n] ? : \t ";
-		std::cin >> resume;
-		if(resume != 'o')
-		{
-			std::cout << "\t\t    ----------- PROGRAMME TERMINÉ -------------- " << std::endl;
-			return 0;
-		}
-		img_read_disp.display(img_read);
-	} while (resume == 'o');
+		std::cin.clear();
+		std::cout << "\n\t  Appuyez sur ENTRER pour revenir au menu ou n'importe quel touche+ENTRER pour quitter : \t ";
+		std::cin.ignore();
+		std::cin.get(resume);
+		if (resume == '\n')
+			std::cout << "\033[2J\033[1;1H"; //clear the console
+	} while (resume == '\n');
 
+	std::cout << "\t\t    ----------- PROGRAMME TERMINÉ -------------- " << std::endl;
+	// std::cout << "\033[2J\033[1;1H";
 	return 0;
 }
