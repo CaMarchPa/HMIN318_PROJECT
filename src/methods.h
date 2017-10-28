@@ -7,22 +7,40 @@
 
 using namespace cimg_library;
 
+//
+extern const int NEIGHBOORS[26][3] = {
+    {0, 0, -1}, {0, 0, 1}, {0, -1, 0}, {0, 1, 0}, {0, -1, -1}, {0, -1, 1}, {0, 1, -1}, {0, 1, 1}, {1, -1, 1},
+    {-1, 0, 0}, {1, 0, 0}, {-1, -1, 0}, {1, -1, 0}, {-1, 1, 0}, {1, 1, 0}, {-1, 0, -1}, {-1, 0, 1}, {1, 1, -1},
+    {1, 0, -1}, {1, 0, 1}, {-1, -1, -1}, {-1, -1, 1}, {-1, 1, -1}, {-1, 1, 1}, {1, -1, -1}, {1, 1, 1}
+};
 
-void hello();
+/**
+ *
+ * DECLARATION OF METHODS
+ */
 CImg<> get_segmented_image_by_avg(CImg<> img, int neighborhood);
 CImg<> get_segmented_image_by_median(CImg<> img, int neighborhood);
 CImg<> get_segmented_image_by_harmonic(CImg<> img, int neighborhood);
 CImg<> get_segmented_image_by_otsu(CImg<>img, int neighborhood);
+CImg<> get_segmented_image_by_CC(CImg<> img, float intensity, float epsilon);
 
-float get_median(std::vector<float> voxels_of_bloc);
 float get_average(std::vector<float> voxels_of_bloc);
-float get_harmonical_avg(std::vector<float> voxels_of_bloc);
+float get_median(std::vector<float> voxels_of_bloc);
+float get_harmonic_avg(std::vector<float> voxels_of_bloc);
 float get_threshold_by_otsu(std::vector<float> voxels_of_bloc);
 std::vector<int> get_histogram(std::vector<float> voxels_of_bloc);
-bool contains_bone(std::vector<float> voxels_of_bloc, int bone_intensity);
-
+bool contains_bone(std::vector<float> voxels_of_bloc, float bone_intensity);
+CImg<> get_extended_image(CImg<> img);
 #endif // METHODS_H
 
+/**
+ * computes a binary image 3D from the given image in argument
+ * by sliding a cube of size NxNxN (where N = neighborhood) on the image
+ * and taking as threshold for bloc the average of all the voxel
+ * intesities belonging to the bloc.
+ *
+ * @return segmented image
+ */
 CImg<> get_segmented_image_by_avg(CImg<> img, int neighborhood) {
     int height = img.height();
     int width = img.width();
@@ -76,6 +94,14 @@ CImg<> get_segmented_image_by_avg(CImg<> img, int neighborhood) {
     return img_result;
 }
 
+/**
+ * computes a binary image 3D from the given image in argument
+ * by sliding a cube of size NxNxN (where N = neighborhood) on the image
+ * and taking as threshold for bloc the median  of all the voxel
+ * intensities belonging to the bloc.
+ *
+ * @return segmented image
+ */
 CImg<> get_segmented_image_by_median(CImg<> img, int neighborhood) {
     int height = img.height();
     int width = img.width();
@@ -128,6 +154,14 @@ CImg<> get_segmented_image_by_median(CImg<> img, int neighborhood) {
     return img_result;
 }
 
+/**
+ * computes a binary image 3D from the given image in argument
+ * by sliding a cube of size NxNxN (where N = neighborhood) on the image
+ * and taking as threshold for bloc the harmonic average  of all the voxel
+ * intensities belonging to the bloc.
+ *
+ * @return segmented image
+ */
 CImg<> get_segmented_image_by_harmonic(CImg<> img, int neighborhood) {
     int height = img.height();
     int width = img.width();
@@ -155,7 +189,7 @@ CImg<> get_segmented_image_by_harmonic(CImg<> img, int neighborhood) {
 
                 //Set the voxels of the bloc from threshold
                 if (contains_bone(voxels_of_bloc, 100)) {
-                    float threshold = get_harmonical_avg(voxels_of_bloc);
+                    float threshold = get_harmonic_avg(voxels_of_bloc);
                     for (int y = j; y < bloc_height; y++) {
                         for (int x = i; x < bloc_width; x++) {
                             for (int z = k; z < bloc_depth; z++) {
@@ -180,6 +214,14 @@ CImg<> get_segmented_image_by_harmonic(CImg<> img, int neighborhood) {
     return img_result;
 }
 
+/**
+ * computes a binary image 3D from the given image in argument
+ * by sliding a cube of size NxNxN (where N = neighborhood) on the image
+ * and taking as threshold the threshold got by appliying otsu's
+ * algorithm on the voxel intensities belonging to the bloc.
+ *
+ * @return segmented image
+ */
 CImg<> get_segmented_image_by_otsu(CImg<>img, int neighborhood) {
     int height = img.height();
     int width = img.width();
@@ -232,15 +274,79 @@ CImg<> get_segmented_image_by_otsu(CImg<>img, int neighborhood) {
     return img_result;
 }
 
-float get_median(std::vector<float> voxels_of_bloc) {
-    int size = voxels_of_bloc.size();
-    float median_value = voxels_of_bloc[size / 2];
-    if (size % 2 == 0) {
-        median_value = (voxels_of_bloc[size / 2 ] + voxels_of_bloc[size / 2 - 1]) / 2;
+/**
+ *
+ */
+CImg<> get_segmented_image_by_CC(CImg<> img, float intensity, float epsilon) {
+    CImg<> img_extended = get_extended_image(img);
+    CImg<> img_result(img);
+
+    int width_ext = img_extended.width();
+    int height_ext = img_extended.height();
+    int depth_ext = img_extended.depth();
+
+    for (int j = 1; j < height_ext-1; j++) {
+        for (int i = 1; i < width_ext-1; i++) {
+            for (int k = 1; k < depth_ext-1; k++) {
+                //
+                float voxel = img_extended(i, j, k);
+                if ( voxel >= intensity ) {
+                    img_extended(i, j, k) = -1; //label to not test this voxel's position later
+                    std::vector< std::vector<int> > position_list;
+                    std::vector<int> tmp(3, 0);
+                    tmp[0] = i;
+                    tmp[1] = j;
+                    tmp[2] = k;
+                    position_list.push_back(tmp);
+
+                    bool stop = false;
+                    int n = 0;
+                    while (stop != true) {
+                        for (int counter = 0; counter < 26; counter++) {
+                            int x = position_list[n][0] + NEIGHBOORS[counter][0];
+                            int y = position_list[n][1] + NEIGHBOORS[counter][1];
+                            int z = position_list[n][2] + NEIGHBOORS[counter][2];
+                            voxel = img_extended(x, y, z);
+                            if ( voxel >= intensity ) {
+                                img_extended(x, y, z) = -1.0;
+                                tmp[0] = x;
+                                tmp[1] = y;
+                                tmp[2] = z;
+                                position_list.push_back(tmp);
+                            }
+                        }
+                        n++;
+                        if (n == position_list.size()) {
+                            stop = true;
+                        }
+                    }
+
+                }
+                //
+            }
+        }
     }
-    return median_value;
+
+    int height = height_ext - 2;
+    int width = width_ext - 2;
+    int depth = depth_ext -2;
+    // set all the voxels with the label - 1 to 255 and the others to 0
+    for (int j = 0; j < height; j++) {
+        for (int i = 0; i < width; i++) {
+            for (int k = 0; k < depth; k++) {
+                float voxel = img_extended(i + 1, j + 1, k + 1);
+                img_result(i, j, k) = (voxel == -1) ? 255 : 0;
+            }
+        }
+    }
+
+    return img_result;
 }
 
+/**
+ * computes and returns the average value of the intensities of the vector of voxel given
+ * in argument.
+ */
 float get_average(std::vector<float> voxels_of_bloc) {
     float avg_value = 0.0;
     int size = voxels_of_bloc.size();
@@ -250,12 +356,33 @@ float get_average(std::vector<float> voxels_of_bloc) {
     return avg_value /= size;
 }
 
-float get_harmonical_avg(std::vector<float> voxels_of_bloc) {
+/**
+ * computes and returns the median value of the intensities of the vector of voxel given
+ * in argument.
+ */
+float get_median(std::vector<float> voxels_of_bloc) {
+    int size = voxels_of_bloc.size();
+    float median_value = voxels_of_bloc[size / 2];
+    if (size % 2 == 0) {
+        median_value = (voxels_of_bloc[size / 2 ] + voxels_of_bloc[size / 2 - 1]) / 2;
+    }
+    return median_value;
+}
+
+/**
+ * computes and returns the value of harmonic average by using the average and median values
+ * of the intensities of the vector of voxel given in argument.
+ */
+float get_harmonic_avg(std::vector<float> voxels_of_bloc) {
     float avg_value = get_average(voxels_of_bloc);
     float median_value = get_median(voxels_of_bloc);
     return (2 * avg_value * median_value) / (avg_value + median_value);
 }
 
+/**
+ * computes and returns the threshold by using otsu's algorithm
+ * on the intensities of the vector of voxel given in argument.
+ */
 float get_threshold_by_otsu(std::vector<float> voxels_of_bloc) {
     std::vector<int> histogram = get_histogram(voxels_of_bloc);
     float probability[256];
@@ -290,6 +417,9 @@ float get_threshold_by_otsu(std::vector<float> voxels_of_bloc) {
     return threshold;
 }
 
+/**
+ * return a vector of the tonal distribution of the given vector of voxels in argument
+ */
 std::vector<int> get_histogram(std::vector<float> voxels_of_bloc) {
     std::vector<int> histogram(256);
     int size = voxels_of_bloc.size();
@@ -301,7 +431,13 @@ std::vector<int> get_histogram(std::vector<float> voxels_of_bloc) {
     return histogram;
 }
 
-bool contains_bone(std::vector<float> voxels_of_bloc, int bone_intensity) {
+/**
+ * check if the vector of voxels given in argument contains at least one intensity
+ * which represent a bone. A bone's intensity must be greater than the bone_intensity
+ * value given in argument.
+ * @return true if the vector of voxels contains a bone, false else.
+ */
+bool contains_bone(std::vector<float> voxels_of_bloc, float bone_intensity) {
     int size = voxels_of_bloc.size();
 
     for (int i = 0; i < size; i++) {
@@ -310,4 +446,34 @@ bool contains_bone(std::vector<float> voxels_of_bloc, int bone_intensity) {
         }
     }
     return false;
+}
+
+/**
+ *
+ */
+CImg<> get_extended_image(CImg<> img) {
+    //
+    int width = img.width();
+    int height = img.height();
+    int depth = img.depth();
+    //
+    int width_ext = width + 2;
+    int height_ext = height + 2;
+    int depth_ext = depth + 2;
+
+    CImg<> img_result(width_ext, height_ext, depth_ext);
+
+    for (int j = 0; j < height_ext; j++) {
+        for (int i = 0; i < width_ext; i++) {
+            for (int k = 0; k < depth_ext; k++) {
+                if ( ((j == 0) || (j == height_ext - 1)) || ((i == 0) || (i == width_ext - 1)) || ((k == 0) || (k == depth_ext - 1)) ) {
+                    img_result(i, j, k) = 0.0;
+                } else {
+                    img_result(i, j, k) = img(i - 1, j - 1, k - 1);
+                }
+            }
+        }
+    }
+
+    return img_result;
 }
