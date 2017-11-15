@@ -1,5 +1,7 @@
 #include "methods.h"
 
+// float min_f_(float a, float b) { return (a < b) ? a : b;}
+// float max_f_(float a, float b) { return (a > b) ? a : b;}
 /**
  *
  */
@@ -18,13 +20,23 @@ int main(int argc, char **argv) {
 	CImg<> img_read;
 	CImg<> img_tmp;
 
-	img_read.load_analyze(argv[1], voxel_size);
-	bool redraw = false;
-	int slice = 0;
-	int width = img_read.width();
-	int height = img_read.height();
-	int depth = img_read.depth();
-
+	// img_read.load_analyze(argv[1], voxel_size);
+	// bool redraw = false;
+	// int slice = 0;
+	// int width = img_read.width();
+	// int height = img_read.height();
+	// int depth = img_read.depth();
+	// float min = 55550.0, max = -55550.0;
+	// for (int j = 0; j < height; j++) {
+	// 	for (int i = 0; i < width; i++) {
+	// 		for (int k = 0; k < depth; k++) {
+	// 			min = min_f_(min, img_read(i, j, k));
+	// 			max = max_f_(max, img_read(i, j, k));
+	// 		}
+	// 	}
+	// }
+	// min = -1024, max = 3071
+	std::cout << "min = " << min << ", max = " << max << '\n';
 	CImgDisplay img_disp(img_read, "Original image");
 	do {
 		std::cout << "\t             +---------------------------------------+" << std::endl;
@@ -172,6 +184,6 @@ int main(int argc, char **argv) {
 	} while (resume == '\n');
 
 	std::cout << "\t\t    ----------- PROGRAMME TERMINÉ -------------- " << std::endl;
-	// std::cout << "\033[2J\033[1;1H";
+	
 	return 0;
 }
