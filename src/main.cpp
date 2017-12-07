@@ -1,7 +1,5 @@
 #include "methods.h"
 
-// float min_f_(float a, float b) { return (a < b) ? a : b;}
-// float max_f_(float a, float b) { return (a > b) ? a : b;}
 /**
  *
  */
@@ -20,23 +18,14 @@ int main(int argc, char **argv) {
 	CImg<> img_read;
 	CImg<> img_tmp;
 
-	// img_read.load_analyze(argv[1], voxel_size);
-	// bool redraw = false;
-	// int slice = 0;
-	// int width = img_read.width();
-	// int height = img_read.height();
-	// int depth = img_read.depth();
-	// float min = 55550.0, max = -55550.0;
-	// for (int j = 0; j < height; j++) {
-	// 	for (int i = 0; i < width; i++) {
-	// 		for (int k = 0; k < depth; k++) {
-	// 			min = min_f_(min, img_read(i, j, k));
-	// 			max = max_f_(max, img_read(i, j, k));
-	// 		}
-	// 	}
-	// }
-	// min = -1024, max = 3071
-	std::cout << "min = " << min << ", max = " << max << '\n';
+	img_read.load_analyze(argv[1], voxel_size);
+	bool redraw = false;
+	int slice = 0;
+	int width = img_read.width();
+	int height = img_read.height();
+	int depth = img_read.depth();
+	float min, max;
+	getMinAndMax(img_read, min, max);
 	CImgDisplay img_disp(img_read, "Original image");
 	do {
 		std::cout << "\t             +---------------------------------------+" << std::endl;
@@ -109,22 +98,37 @@ int main(int argc, char **argv) {
 					std::cout << "\t\t   SEUIL FIXÉ PAR L'UTILISATEUR " << std::endl;
 					std::cout << "\n\t  * * * * Utilisez la molette de la souris et cliquer sur l'image pour fixer un seuil * * * * " << std::endl;
 					while (x == -1) {
+						int curr_x = 0;
+						int curr_y = 0;
+						int curr_z = slice;
+
+						if (img_disp.mouse_x() >= 0 && img_disp.mouse_y() >= 0) {
+							curr_x = img_disp.mouse_x();
+							curr_y = img_disp.mouse_y();
+							redraw = true;
+						}
+
 						if (img_disp.wheel()) {
 							const int scroll = img_disp.wheel();
 							slice += scroll;
 				            if (slice < 0) {
 				                slice = 0;
 				            } else {
-				                if (slice >= (int)depth) {
-				                    slice = (int)depth - 1;
+				                if (slice >= (int) depth) {
+				                    slice = (int) depth - 1;
 				                }
 				            }
+							curr_z = slice;
 				            img_disp.set_wheel();
 				            redraw = true;
 						}
 
 						if (redraw) {
 							CImg<> current_img = img_read.get_slice(slice);
+							float white[]={(int)max,(int)max,(int)max},black[]={(int)min,(int)min,(int)min};
+							char text[100];
+							sprintf(text, " img(%d, %d, %d) : %2.f", curr_x, curr_y, curr_z, img_read(curr_x, curr_y, curr_z));
+							current_img.draw_text (2, 2, text, white, black, 0.7f, 8);
 							img_disp.display(current_img);
 						}
 
@@ -184,6 +188,6 @@ int main(int argc, char **argv) {
 	} while (resume == '\n');
 
 	std::cout << "\t\t    ----------- PROGRAMME TERMINÉ -------------- " << std::endl;
-	
+
 	return 0;
 }
