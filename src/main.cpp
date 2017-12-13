@@ -5,6 +5,7 @@
  */
 int main(int argc, char **argv) {
 	int threshold_method = 0;
+	int sliding_mode = 1;
 	int neighborhood = 3;
 
 	char resume = '\n';
@@ -27,6 +28,7 @@ int main(int argc, char **argv) {
 	float min, max;
 	getMinAndMax(img_read, min, max);
 	CImgDisplay img_disp(img_read, "Original image");
+	bool okay = false;
 	do {
 		std::cout << "\t             +---------------------------------------+" << std::endl;
 		std::cout << "\t      -------| Choisissez le type de calcul du seuil |-------" << std::endl;
@@ -41,16 +43,41 @@ int main(int argc, char **argv) {
 		std::cout << "\t     +---------------------------------------------------------+" << std::endl;
 		std::cout << "\t                   COMPUTE THRESHOLD METHOD : " << '\t';
 		std::cin >> threshold_method;
-		while (std::cin.fail()) {
-			std::cout << "\t             /!\\ ERROR : enter a integer " << '\t';
-			std::cin.clear();
-			std::cin.ignore(256, '\n');
-			std::cin >> threshold_method;
+		while (!okay) {
+			if (std::cin.fail()) {
+				std::cout << "\t             /!\\ ERROR : enter a integer " << '\t';
+				std::cin.clear();
+				std::cin.ignore(256, '\n');
+				std::cin >> threshold_method;
+			} else if (threshold_method > 5 || threshold_method < 1) {
+				std::cout << "\t 	/!\\ Vous devez choisir un nombre entre 1 et 5 " << '\t';
+				std::cin >> threshold_method;
+			} else
+				okay = true;
 		}
 
 		std::cout << std::endl;
 
 		if (threshold_method != 5) {
+			std::cout << "\t+--------------------------------------------------------------------------------+" << std::endl;
+			std::cout << "\t| Choisissez comment glisser le bloc : 1 - bloc par bloc ou 2 - voxel par voxel  |" << std::endl;
+			std::cout << "\t+--------------------------------------------------------------------------------+" << std::endl;
+			std::cout << "\t\t\t\t 		===> " << '\t';
+			std::cin >> sliding_mode;
+			okay = false;
+			while (!okay) {
+				if (std::cin.fail()) {
+					std::cout << "\t             /!\\ ERROR : enter a integer " << '\t';
+					std::cin.clear();
+					std::cin.ignore(256, '\n');
+					std::cin >> sliding_mode;
+				} else if (sliding_mode > 2 || sliding_mode < 1) {
+					std::cout << "\t		/!\\ Vous devez saisir le nombre 1 ou 2 " << '\t';
+					std::cin >> sliding_mode;
+				} else
+					okay = true;
+			}
+
 			std::cout << "\t             +-----------------------------------+" << std::endl;
 			std::cout << "\t      -------| Choisissez la taille du voisinage |-------" << std::endl;
 			std::cout << "\t      +------                                     -------+" << std::endl;
@@ -58,40 +85,62 @@ int main(int argc, char **argv) {
 			std::cout << "\t      +--------------------------------------------------+" << std::endl;
 			std::cout << "\t                   NEIGHBORHOOD SIZE : " << '\t';
 			std::cin >> neighborhood;
-			while (std::cin.fail()) {
-				std::cout << "\t             /!\\ ERROR : enter a integer " << '\t';
-				std::cin.clear();
-				std::cin.ignore(256, '\n');
-				std::cin >> neighborhood;
+			okay = false;
+			while (!okay) {
+				if (std::cin.fail()) {
+					std::cout << "\t             /!\\ ERROR : enter a integer " << '\t';
+					std::cin.clear();
+					std::cin.ignore(256, '\n');
+					std::cin >> neighborhood;
+				} else  if( sliding_mode == 2 && neighborhood % 2 == 0) {
+					std::cout << "\t Pour ce mode de glissement de bloc, saisissez un nombre impair : " << '\t';
+					std::cin >> neighborhood;
+				} else
+					okay = true;
 			}
 		}
 
 		if ((neighborhood > height / 2) || (neighborhood > width / 2) || (neighborhood > depth / 2) || (neighborhood < 0)) {
 			neighborhood = (height < width) ? height : width;
 			neighborhood = (neighborhood < depth) ? (neighborhood / 2) : depth / 2;
+			if (sliding_mode == 2)
+				neighborhood -= 1;
 		}
+
 		int x = - 1, y = - 1, z = 0;
 		float intensity;
 		switch(threshold_method)
 		{
 			case 1:
 					std::cout << "\t\t   SEUIL À PARTIR DE LA MOYENNE DU BLOC " << std::endl;
-					img_tmp = get_segmented_image_by_avg(img_read, neighborhood);
+					if (sliding_mode == 1)
+						img_tmp = get_segmented_image_by_avg(img_read, neighborhood);
+					else
+						img_tmp = getSegmentedImageByAvg(img_read, neighborhood);
 					break;
 
 			case 2:
 					std::cout << "\t\t   SEUIL À PARTIR DE LA VALEUR MÉDIANE " << std::endl;
-					img_tmp = get_segmented_image_by_median(img_read, neighborhood);
+					if (sliding_mode == 1)
+						img_tmp = get_segmented_image_by_median(img_read, neighborhood);
+					else
+						img_tmp = getSegmentedImageByMedian(img_read, neighborhood);
 					break;
 
 			case 3:
 					std::cout << "\t\t   SEUIL À PARTIR D'UNE MOYENNE HARMONIQUE " << std::endl;
-					img_tmp = get_segmented_image_by_harmonic(img_read, neighborhood);
+					if (sliding_mode == 1)
+						img_tmp = get_segmented_image_by_harmonic(img_read, neighborhood);
+					else
+						img_tmp = getSegmentedImageByHarmonic(img_read, neighborhood);
 					break;
 
 			case 4:
 					std::cout << "\t\t   SEUIL À PARTIR DE LA MÉTHODE D'OTSU " << std::endl;
-					img_tmp = get_segmented_image_by_otsu(img_read, neighborhood);
+					if (sliding_mode == 1)
+						img_tmp = get_segmented_image_by_otsu(img_read, neighborhood);
+					else
+						img_tmp = getSegmentedImageByOtsu(img_read, neighborhood);
 					break;
 
 			case 5:
@@ -179,6 +228,16 @@ int main(int argc, char **argv) {
 		}
 		img_read_disp.close();
 
+		char save = 'n';
+		std::cout << "\n\tVoulez-vous sauvegarder l'image résultante? o = oui ou n'importe quelle touche pour passer: \t ";
+		std::cin >> save;
+		if (save == 'o' || save == 'O') {
+			// std::string name = "../img/results/segmented_image";
+			char name[40] = "../img/results/segmented_image.hdr";
+			std::cout << "\t\t" << name << '\n';
+			img_tmp.save_analyze(name);
+		}
+
 		std::cin.clear();
 		std::cout << "\n\t  Appuyez sur ENTRER pour revenir au menu ou n'importe quel touche+ENTRER pour quitter : \t ";
 		std::cin.ignore();
@@ -187,7 +246,7 @@ int main(int argc, char **argv) {
 			std::cout << "\033[2J\033[1;1H"; //clear the console
 	} while (resume == '\n');
 
-	std::cout << "\t\t    ----------- PROGRAMME TERMINÉ -------------- " << std::endl;
+	std::cout << "\t\t    ----------- PROGRAMME TERMINÉ ------------- " << std::endl;
 
 	return 0;
 }
