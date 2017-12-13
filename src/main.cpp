@@ -245,7 +245,6 @@ int main(int argc, char **argv) {
 		if (resume == '\n')
 			std::cout << "\033[2J\033[1;1H"; //clear the console
 	} while (resume == '\n');
-
 	std::cout << "\t\t    ----------- PROGRAMME TERMINÉ ------------- " << std::endl;
 
 	return 0;
