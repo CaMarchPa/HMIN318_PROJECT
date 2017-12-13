@@ -1,4 +1,4 @@
-# HMIN318_PROJECT
+# PROJECT_HMIN318
 IMAGINA : Projet de fin de semestre de l'unité HMIN318
 
 Le projet consiste à implémenter un(des) algorithme(s) pour la segmentation des Sinus dans des Images CT par seuillage local.
