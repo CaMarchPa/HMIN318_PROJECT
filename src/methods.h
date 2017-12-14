@@ -4,6 +4,8 @@
 #include <iostream>
 #include "CImg.h"
 #include <vector>
+#include <ctime>
+
 
 using namespace cimg_library;
 

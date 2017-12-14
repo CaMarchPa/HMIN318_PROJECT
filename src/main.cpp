@@ -4,11 +4,15 @@
  *
  */
 int main(int argc, char **argv) {
-	int threshold_method = 0;
-	int sliding_mode = 1;
-	int neighborhood = 3;
+	int threshold_method = 0; 	// allows to choose the computation method of the threshold
+	int sliding_mode = 1; 		// the mode of sliding the bloc, either bloc by bloc or voxel by voxel
+	int neighborhood = 3; 		// size of neighborhood
+	char resume = '\n'; 		// the value that allow user to come back to the menu or quit the program
 
-	char resume = '\n';
+	// The two variables allow to compute the execution time of program or function
+	double start_time = 0;
+	double end_time = 0;
+	
 	if (argc != 2) {
 		std::cout << "USAGE : (UNIX) ./project image_name.hdr" << std::endl;
 		std::cout << "        (WINDOWS) project.xe image_name.hdr)" << '\n';
@@ -16,19 +20,20 @@ int main(int argc, char **argv) {
 	}
 
 	float voxel_size[3];
-	CImg<> img_read;
-	CImg<> img_tmp;
+	CImg<> img_read; 		// the reading image from the console
+	CImg<> img_tmp;			// the variable which get the segemented image
 
 	img_read.load_analyze(argv[1], voxel_size);
+	
 	bool redraw = false;
 	int slice = 0;
-	int width = img_read.width();
-	int height = img_read.height();
-	int depth = img_read.depth();
-	float min, max;
-	getMinAndMax(img_read, min, max);
-	CImgDisplay img_disp(img_read, "Original image");
-	bool okay = false;
+	int width = img_read.width();	// width of the image
+	int height = img_read.height();	// height of the image
+	int depth = img_read.depth();	// depth of the image
+	
+	CImgDisplay img_disp(img_read, "Original image");	// displays the original image
+
+	bool okay = false;		// variable using to validate or not some request given by the user
 	do {
 		std::cout << "\t             +---------------------------------------+" << std::endl;
 		std::cout << "\t      -------| Choisissez le type de calcul du seuil |-------" << std::endl;
@@ -113,34 +118,46 @@ int main(int argc, char **argv) {
 		{
 			case 1:
 					std::cout << "\t\t   SEUIL À PARTIR DE LA MOYENNE DU BLOC " << std::endl;
+					start_time = clock();
 					if (sliding_mode == 1)
 						img_tmp = get_segmented_image_by_avg(img_read, neighborhood);
 					else
 						img_tmp = getSegmentedImageByAvg(img_read, neighborhood);
+					end_time = clock();
+					std::cout << "\t\t   	Temps d'éxécution : " <<  (end_time - start_time) / double (CLOCKS_PER_SEC) << " secondes "<<std::endl;
 					break;
 
 			case 2:
 					std::cout << "\t\t   SEUIL À PARTIR DE LA VALEUR MÉDIANE " << std::endl;
+					start_time = clock();
 					if (sliding_mode == 1)
 						img_tmp = get_segmented_image_by_median(img_read, neighborhood);
 					else
 						img_tmp = getSegmentedImageByMedian(img_read, neighborhood);
+					end_time = clock();
+					std::cout << "\t\t   	Temps d'éxécution : " <<  (end_time - start_time) / double (CLOCKS_PER_SEC) << " secondes "<<std::endl;
 					break;
 
 			case 3:
 					std::cout << "\t\t   SEUIL À PARTIR D'UNE MOYENNE HARMONIQUE " << std::endl;
+					start_time = clock();
 					if (sliding_mode == 1)
 						img_tmp = get_segmented_image_by_harmonic(img_read, neighborhood);
 					else
 						img_tmp = getSegmentedImageByHarmonic(img_read, neighborhood);
+					end_time = clock();
+					std::cout << "\t\t   	Temps d'éxécution : " <<  (end_time - start_time) / double (CLOCKS_PER_SEC) << " secondes "<<std::endl;
 					break;
 
 			case 4:
 					std::cout << "\t\t   SEUIL À PARTIR DE LA MÉTHODE D'OTSU " << std::endl;
+					start_time = clock();
 					if (sliding_mode == 1)
 						img_tmp = get_segmented_image_by_otsu(img_read, neighborhood);
 					else
 						img_tmp = getSegmentedImageByOtsu(img_read, neighborhood);
+					end_time = clock();
+					std::cout << "\t\t   	Temps d'éxécution : " <<  (end_time - start_time) / double (CLOCKS_PER_SEC) << " secondes "<<std::endl;
 					break;
 
 			case 5:
@@ -174,6 +191,8 @@ int main(int argc, char **argv) {
 
 						if (redraw) {
 							CImg<> current_img = img_read.get_slice(slice);
+							float min, max;
+							getMinAndMax(img_read, min, max);
 							float white[]={(int)max,(int)max,(int)max},black[]={(int)min,(int)min,(int)min};
 							char text[100];
 							sprintf(text, " img(%d, %d, %d) : %2.f", curr_x, curr_y, curr_z, img_read(curr_x, curr_y, curr_z));
@@ -193,7 +212,10 @@ int main(int argc, char **argv) {
 						intensity = 100;
 					slice = 0;
 					redraw = false;
+					start_time = clock();
 					img_tmp = get_segmented_image_by_CC(img_read, intensity, 20);
+					end_time = clock();
+					std::cout << "\t\t   	Temps d'éxécution : " <<  (end_time - start_time) / double (CLOCKS_PER_SEC) << " secondes "<<std::endl;
 					break;
 
 			default:
