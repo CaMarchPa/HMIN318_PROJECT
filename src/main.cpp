@@ -124,7 +124,7 @@ int main(int argc, char **argv) {
 					else
 						img_tmp = getSegmentedImageByAvg(img_read, neighborhood);
 					end_time = clock();
-					std::cout << "\t\t   	Temps d'éxécution : " <<  (end_time - start_time) / double (CLOCKS_PER_SEC) << " secondes "<<std::endl;
+					std::cout << "\t\t   	Temps d'exécution : " <<  (end_time - start_time) / double (CLOCKS_PER_SEC) << " secondes "<<std::endl;
 					break;
 
 			case 2:
@@ -135,7 +135,7 @@ int main(int argc, char **argv) {
 					else
 						img_tmp = getSegmentedImageByMedian(img_read, neighborhood);
 					end_time = clock();
-					std::cout << "\t\t   	Temps d'éxécution : " <<  (end_time - start_time) / double (CLOCKS_PER_SEC) << " secondes "<<std::endl;
+					std::cout << "\t\t   	Temps d'exécution : " <<  (end_time - start_time) / double (CLOCKS_PER_SEC) << " secondes "<<std::endl;
 					break;
 
 			case 3:
@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
 					else
 						img_tmp = getSegmentedImageByHarmonic(img_read, neighborhood);
 					end_time = clock();
-					std::cout << "\t\t   	Temps d'éxécution : " <<  (end_time - start_time) / double (CLOCKS_PER_SEC) << " secondes "<<std::endl;
+					std::cout << "\t\t   	Temps d'exécution : " <<  (end_time - start_time) / double (CLOCKS_PER_SEC) << " secondes "<<std::endl;
 					break;
 
 			case 4:
@@ -157,7 +157,7 @@ int main(int argc, char **argv) {
 					else
 						img_tmp = getSegmentedImageByOtsu(img_read, neighborhood);
 					end_time = clock();
-					std::cout << "\t\t   	Temps d'éxécution : " <<  (end_time - start_time) / double (CLOCKS_PER_SEC) << " secondes "<<std::endl;
+					std::cout << "\t\t   	Temps d'exécution : " <<  (end_time - start_time) / double (CLOCKS_PER_SEC) << " secondes "<<std::endl;
 					break;
 
 			case 5:
@@ -215,7 +215,7 @@ int main(int argc, char **argv) {
 					start_time = clock();
 					img_tmp = get_segmented_image_by_CC(img_read, intensity, 20);
 					end_time = clock();
-					std::cout << "\t\t   	Temps d'éxécution : " <<  (end_time - start_time) / double (CLOCKS_PER_SEC) << " secondes "<<std::endl;
+					std::cout << "\t\t   	Temps d'exécution : " <<  (end_time - start_time) / double (CLOCKS_PER_SEC) << " secondes "<<std::endl;
 					break;
 
 			default:
