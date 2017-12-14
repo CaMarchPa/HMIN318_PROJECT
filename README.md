@@ -1,7 +1,7 @@
 # PROJECT_HMIN318
 IMAGINA : Projet de fin de semestre de l'unité HMIN318
 
-Le projet consiste à implémenter un(des) algorithme(s) pour la segmentation des Sinus dans des Images CT par seuillage local.
+Le projet consiste à implémenter un(des) méthode(s) pour la segmentation des Sinus dans des Images CT par seuillage local.
 
 C'est un mini-projet qui rentre dans le cadre de ma formation en imagerie médicale à l'Université Montpellier 2.
 
@@ -21,4 +21,4 @@ g++ -o project methods.h main.cpp -O2 -lm -lpthread -I/usr/X11R6/include -L/usr/
 
 Execution example:
 
-./main image_name.hdr
+./main image_name.(extension(hdr))
